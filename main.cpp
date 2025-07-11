@@ -11,7 +11,7 @@ int main()
     static constexpr int w{800}, h{800}, ch{3};
     unsigned char data[w * h * ch];
     uint32_t *idata;
-    idata = new uint32_t[w * h * ch];
+    idata = new uint32_t[w * h]; // no ch here
     memset(data, 0, sizeof(data));
     memset(idata, 0, sizeof(idata));
 
@@ -34,6 +34,11 @@ int main()
             float y0 = dy * j - 1.f;
             std::complex<float> z{x0, y0};
 
+            for (int q=0; q<15; ++q) // clear initial transients
+            {
+                auto tm = z * z + c;
+                z = {std::sin(tm.real()), std::cos(tm.imag()) };
+            }
             for (int q=0; q<150; ++q)
             {
                 auto tm = z * z + c;
@@ -41,7 +46,7 @@ int main()
 
                 auto px = (int)((z.real() + 1.f )* odx);
                 auto py = (int)((z.imag() + 1.f )* ody);
-                auto d = ch * (py + h * px);
+                auto d = py + h * px;
                 idata[d]++;
             }
         }
@@ -56,10 +61,11 @@ int main()
     {
         for (int j=0; j<h; ++j)
         {
-            auto d = ch * (j + h * i);
-            data[d] = 255 - std::min(idata[d] >> 1, 255u);
-            data[d+1] = 255 - std::min(idata[d] >> 2, 255u);
-            data[d+2] = 255 - std::min(idata[d] >> 3, 255u);
+            auto id = j + h * i;
+            auto d = id * ch;
+            data[d] = 255 - std::min(idata[id] >> 1, 255u);
+            data[d+1] = 255 - std::min(idata[id] >> 2, 255u);
+            data[d+2] = 255 - std::min(idata[id] >> 3, 255u);
         }
     }
 
